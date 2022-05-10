@@ -65,24 +65,48 @@ public class TextSpacing : BaseMeshEffect
         List<UIVertex> vertices = new List<UIVertex>();
         vh.GetUIVertexStream(vertices);
 
+        string[] textLines = text.text.Split('\n');
+    
+        List<int> lTextLines = new List<int>();
+        for (int i = 0; i < textLines.Length; ++i)
+        {
+            int charsWidth = 0;
+            int startIndex = 0;
+            int twidth = (int)text.rectTransform.rect.width;
+            for (int j = 0, length = text.text.Length; j < length; ++j)
+            {
+                if (text.font.GetCharacterInfo(text.text[j], out CharacterInfo charInfo, text.fontSize, text.fontStyle))
+                {
+                    charsWidth += charInfo.advance;
+                    if (charsWidth > twidth)
+                    {
+                        lTextLines.Add(j-startIndex);
+                        startIndex = j;
+                        charsWidth = charInfo.advance;
+                    }
+                }
+            }
+            if (charsWidth > 0)
+            {
+                lTextLines.Add(text.text.Length - startIndex);
+            }
+        }
 
-        string[] texts = text.text.Split('\n');
-
-        Line[] lines = new Line[texts.Length];
+        Line[] lines = new Line[lTextLines.Count];
 
         for (int i = 0; i < lines.Length; ++i)
         {
             if (i == 0)
             {
-                lines[i] = new Line(0, texts[i].Length);
+                lines[i] = new Line(0, lTextLines[i]);
             }
             else if (i+1 == lines.Length)
             {
-                lines[i] = new Line(lines[i-1].endVertexIndex + 1, texts[i].Length);
+                lines[i] = new Line(lines[i-1].endVertexIndex + 1, lTextLines[i]);
             }
             else
             {
-                lines[i] = new Line(lines[i-1].endVertexIndex + 1, texts[i].Length);
+                lines[i] = new Line(lines[i-1].endVertexIndex + 1, lTextLines[i]);
             }
         }
         
