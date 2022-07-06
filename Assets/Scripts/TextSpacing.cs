@@ -70,25 +70,32 @@ public class TextSpacing : BaseMeshEffect
         List<int> lTextLines = new List<int>();
         for (int i = 0; i < textLines.Length; ++i)
         {
-            int charsWidth = 0;
-            int startIndex = 0;
-            int twidth = (int)text.rectTransform.rect.width;
-            for (int j = 0, length = text.text.Length; j < length; ++j)
+            if (text.horizontalOverflow == HorizontalWrapMode.Wrap)
             {
-                if (text.font.GetCharacterInfo(text.text[j], out CharacterInfo charInfo, text.fontSize, text.fontStyle))
+                int charsWidth = 0;
+                int startIndex = 0;
+                int twidth = (int)text.rectTransform.rect.width;
+                for (int j = 0, length = text.text.Length; j < length; ++j)
                 {
-                    charsWidth += charInfo.advance;
-                    if (charsWidth > twidth)
+                    if (text.font.GetCharacterInfo(text.text[j], out CharacterInfo charInfo, text.fontSize, text.fontStyle))
                     {
-                        lTextLines.Add(j-startIndex);
-                        startIndex = j;
-                        charsWidth = charInfo.advance;
+                        charsWidth += charInfo.advance;
+                        if (charsWidth > twidth)
+                        {
+                            lTextLines.Add(j-startIndex);
+                            startIndex = j;
+                            charsWidth = charInfo.advance;
+                        }
                     }
                 }
+                if (charsWidth > 0)
+                {
+                    lTextLines.Add(text.text.Length - startIndex);
+                }
             }
-            if (charsWidth > 0)
+            else
             {
-                lTextLines.Add(text.text.Length - startIndex);
+                lTextLines.Add(textLines[i].Length);
             }
         }
 
