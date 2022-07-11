@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,8 +31,14 @@ public class TextSpacing : BaseMeshEffect
     }
 
     [Tooltip("This value set 1 equals 1/100em of the font size.")]
-    public float charSpacing = 1.0f;
+    public float charSpacing = 0.0f;
 
+    public bool Regexable = true;
+
+    // 匹配所有标签: <.*?>
+    // 匹配所有标签: <[a-z]+?\=.+?>|<\w+?>|<\/[a-z]+?>
+    // 匹配所有size标签: (<size=[0-9]+>.*?</size>)+?
+    // 匹配所有size标签里面的内容(过滤size标签): ((?<=<size=[0-9]+>).*?(?=</size>))+?
 
     public override void ModifyMesh(VertexHelper vh)
     {
@@ -65,8 +72,10 @@ public class TextSpacing : BaseMeshEffect
         List<UIVertex> vertices = new List<UIVertex>();
         vh.GetUIVertexStream(vertices);
 
-        string[] textLines = text.text.Split('\n');
-    
+        // 如果选择正则匹配,则过滤标签
+        string replaced = Regexable ? Regex.Replace(text.text, @"<[a-z]+?\=.+?>|<\w+?>|<\/[a-z]+?>", string.Empty) : text.text;
+        string[] textLines = replaced.Split('\n');
+
         List<int> lTextLines = new List<int>();
         for (int i = 0; i < textLines.Length; ++i)
         {
@@ -75,9 +84,9 @@ public class TextSpacing : BaseMeshEffect
                 int charsWidth = 0;
                 int startIndex = 0;
                 int twidth = (int)text.rectTransform.rect.width;
-                for (int j = 0, length = text.text.Length; j < length; ++j)
+                for (int j = 0, length = textLines[i].Length; j < length; ++j)
                 {
-                    if (text.font.GetCharacterInfo(text.text[j], out CharacterInfo charInfo, text.fontSize, text.fontStyle))
+                    if (text.font.GetCharacterInfo(textLines[i][j], out CharacterInfo charInfo, text.fontSize, text.fontStyle))
                     {
                         charsWidth += charInfo.advance;
                         if (charsWidth > twidth)
@@ -90,7 +99,7 @@ public class TextSpacing : BaseMeshEffect
                 }
                 if (charsWidth > 0)
                 {
-                    lTextLines.Add(text.text.Length - startIndex);
+                    lTextLines.Add(textLines[i].Length - startIndex);
                 }
             }
             else
@@ -157,8 +166,5 @@ public class TextSpacing : BaseMeshEffect
                 }
             }
         }
-
     }
-
-
 }
